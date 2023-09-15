@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="clipRectRight">90dp</dimen>
-    <dimen name="clipRectBottom">90dp</dimen>
+    <dimen name="clipRectRight">180dp</dimen>
+    <dimen name="clipRectBottom">140dp</dimen>
     <dimen name="clipRectTop">0dp</dimen>
     <dimen name="clipRectLeft">0dp</dimen>
 

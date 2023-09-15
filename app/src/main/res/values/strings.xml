@@ -2,5 +2,5 @@
     <string name="app_name">Clipping Example</string>
     <string name="clipping">Clipping</string>
     <string name="translated">translated text</string>
-    <string name="skewed">"Skewed and "</string>
+    <string name="skewed">"Skewed \&amp; "</string>
 </resources>

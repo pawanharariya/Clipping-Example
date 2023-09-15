@@ -1,6 +1,7 @@
 package com.example.clippingexample
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -11,6 +12,7 @@ import android.os.Build.VERSION
 import android.os.Build.VERSION_CODES
 import android.util.AttributeSet
 import android.view.View
+import androidx.annotation.RequiresApi
 
 class ClippedView @JvmOverloads constructor(
     context: Context,
@@ -26,6 +28,8 @@ class ClippedView @JvmOverloads constructor(
     }
     private val path = Path()
     private val text = resources.getString(R.string.clipping)
+    private val translatedText = resources.getString(R.string.translated)
+    private val skewedText = resources.getString(R.string.skewed)
     private val clipRectRight = resources.getDimension(R.dimen.clipRectRight)
     private val clipRectBottom = resources.getDimension(R.dimen.clipRectBottom)
     private val clipRectTop = resources.getDimension(R.dimen.clipRectTop)
@@ -35,6 +39,7 @@ class ClippedView @JvmOverloads constructor(
     private val circleRadius = resources.getDimension(R.dimen.circleRadius)
     private val textOffset = resources.getDimension(R.dimen.textOffset)
     private val textSize = resources.getDimension(R.dimen.textSize)
+    val image = BitmapFactory.decodeResource(resources, R.drawable.bg)
 
     private val columnOne = rectInset
     private val columnTwo = columnOne + rectInset + clipRectRight
@@ -43,6 +48,7 @@ class ClippedView @JvmOverloads constructor(
     private val rowThree = rowTwo + rectInset + clipRectBottom
     private val rowFour = rowThree + rectInset + clipRectBottom
     private val textRow = rowFour + (1.5f * clipRectBottom)
+    private val rejectRow = rowFour + rectInset + 2 * clipRectBottom
 
     private var rectF = RectF(
         rectInset,
@@ -51,6 +57,7 @@ class ClippedView @JvmOverloads constructor(
         clipRectBottom - rectInset
     )
 
+    @RequiresApi(VERSION_CODES.R)
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         drawBackAndUnclippedRectangle(canvas)
@@ -62,20 +69,21 @@ class ClippedView @JvmOverloads constructor(
         drawOutsideClippingExample(canvas)
         drawSkewedTextExample(canvas)
         drawTranslatedTextExample(canvas)
-        drawQuickRejectExample(canvas)
+        //drawQuickRejectExample(canvas)
     }
 
     private fun drawClippedRectangle(canvas: Canvas) {
         canvas.clipRect(clipRectLeft, clipRectTop, clipRectRight, clipRectBottom)
-        canvas.drawColor(Color.WHITE)
-        paint.color = Color.RED
-        canvas.drawLine(clipRectLeft, clipRectTop, clipRectRight, clipRectBottom, paint)
-        paint.color = Color.GREEN
-        canvas.drawCircle(circleRadius, clipRectBottom - circleRadius, circleRadius, paint)
-        paint.color = Color.BLUE
-        paint.textSize = textSize
-        paint.textAlign = Paint.Align.RIGHT
-        canvas.drawText(text, clipRectRight, textOffset, paint)
+//        canvas.drawColor(Color.WHITE)
+//        paint.color = Color.RED
+//        canvas.drawLine(clipRectLeft, clipRectTop, clipRectRight, clipRectBottom, paint)
+//        paint.color = Color.GREEN
+//        canvas.drawCircle(circleRadius, clipRectBottom - circleRadius, circleRadius, paint)
+//        paint.color = Color.BLUE
+//        paint.textSize = textSize
+//        paint.textAlign = Paint.Align.RIGHT
+//        canvas.drawText(text, clipRectRight, textOffset, paint)
+        canvas.drawBitmap(image, clipRectLeft, clipRectTop, paint)
     }
 
     /**
@@ -85,7 +93,7 @@ class ClippedView @JvmOverloads constructor(
      */
 
     private fun drawBackAndUnclippedRectangle(canvas: Canvas) {
-        canvas.drawColor(Color.GRAY)
+        canvas.drawColor(Color.BLACK)
         canvas.save()
         canvas.translate(columnOne, rowOne)
         drawClippedRectangle(canvas)
@@ -220,7 +228,8 @@ class ClippedView @JvmOverloads constructor(
 
         // draw a rounded rectangle from a rectangular shape
         path.addRoundRect(
-            rectF, clipRectRight / 4,
+            rectF,
+            clipRectRight / 4,
             clipRectRight / 4, Path.Direction.CCW
         )
         canvas.clipPath(path)
@@ -245,11 +254,77 @@ class ClippedView @JvmOverloads constructor(
     }
 
     private fun drawTranslatedTextExample(canvas: Canvas) {
+        // Drawing text is same as drawing shapes
+        canvas.save()
+        paint.color = Color.GREEN
+        // Align the LEFT side of the text with the origin.
+        paint.textAlign = Paint.Align.LEFT
+        // Move canvas origin to required coordinate
+        canvas.translate(columnTwo, textRow)
+        // Draw text
+        canvas.drawText(
+            translatedText,
+            clipRectLeft, clipRectTop, paint
+        )
+        canvas.restore()
     }
 
     private fun drawSkewedTextExample(canvas: Canvas) {
+        canvas.save()
+        paint.color = Color.YELLOW
+        // Align the RIGHT side of the text with the origin.
+        paint.textAlign = Paint.Align.RIGHT
+        // Translate the canvas to required position
+        canvas.translate(columnTwo, textRow)
+        // Apply skew transformation.
+        canvas.skew(0.2f, 0.3f)
+        canvas.drawText(
+            skewedText,
+            clipRectLeft, clipRectTop, paint
+        )
+        canvas.restore()
     }
 
+    @RequiresApi(VERSION_CODES.R)
     private fun drawQuickRejectExample(canvas: Canvas) {
+        // Quick reject allows to check whether a specified rectangle or path would lie
+        // completely outside the current clipped region, after all transformations have been applied
+        // and there is no need to write our own intersection logic.
+        val inClipRectangle = RectF(
+            clipRectRight / 2,
+            clipRectBottom / 2,
+            clipRectRight * 2,
+            clipRectBottom * 2
+        )
+
+        val notInClipRectangle = RectF(
+            RectF(
+                clipRectRight + 1,
+                clipRectBottom + 1,
+                clipRectRight * 2,
+                clipRectBottom * 2
+            )
+        )
+
+        canvas.save()
+        // Translate canvas to required coordinate
+        canvas.translate(columnOne, rejectRow)
+
+        // define a clipping region
+        canvas.clipRect(
+            clipRectLeft, clipRectTop,
+            clipRectRight, clipRectBottom
+        )
+
+        // Check if current rectangle lies in clipping region
+        if (canvas.quickReject(notInClipRectangle)) {
+            canvas.drawColor(Color.WHITE)
+        } else {
+            canvas.drawColor(Color.BLACK)
+            canvas.drawRect(
+                inClipRectangle, paint
+            )
+        }
+        canvas.restore()
     }
 }
